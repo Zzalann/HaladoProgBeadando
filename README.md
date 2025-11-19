@@ -73,7 +73,7 @@ Win → visszadob a menübe
 
 4. Ami még kell (következő fejlesztési lépések):
 
-1. Ellenség AI működése
+Ellenség AI működése
 
 Idle (állás)
 
@@ -83,13 +83,13 @@ Ha messzire megy → visszatérés a kezdő pontra
 
 Ha elkap → Game Over
 
-2. Game Over képernyő
+Game Over képernyő
 
 Újra próbálom
 
 Vissza a menübe
 
-3. Checkpoint rendszer
+Checkpoint rendszer
 
 Ha a player hozzáér a checkpointhoz → felugrik egy kérdés
 
@@ -99,7 +99,7 @@ Csak jó válasz után enged tovább a célhoz
 
 „Feladom” gomb halállal
 
-4. Grafikai fejlesztések
+Grafikai fejlesztések
 
 Player sprite
 
