@@ -1,5 +1,4 @@
-✔ 1. Mi készült el eddig?
-
+1. Ami már kész:
 • Főmenü rendszer
 
 „Pályaválasztás” gomb
@@ -36,7 +35,7 @@ Minden pálya 1000×600 px (25×15 tile)
 
 A TXT-s pálya pontosan kitölti a teljes ablakot
 
-✔ 2. Hogyan készül a pálya? (TXT tilemap)
+2. Egy pálya felépítése (TXT tilemap):
 
 A pálya egy sima szövegfájl: level1.txt, level2.txt, level3.txt
 
@@ -63,7 +62,7 @@ Példa pályarészlet:
 
 A játék ezeket soronként beolvassa, és a megfelelő helyre rajzolja a blokkokat.
 
-✔ 3. Mi működik már teljesen?
+3. Ami már készen van:
 
 Menük
 
@@ -83,7 +82,7 @@ Enemy megjelenítése
 
 Win → visszadob a menübe
 
-4. Ami még kell (következő fejlesztési lépések)
+4. Ami még kell (következő fejlesztési lépések):
 1. Ellenség AI működése
 
 Idle (állás)
