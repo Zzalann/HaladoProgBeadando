@@ -42,7 +42,7 @@ A pálya egy sima szövegfájl: level1.txt, level2.txt, level3.txt
 Minden sor 25 karakter széles, minden pálya 15 sor magas.
 Minden karakter jelent valamit:
 Betű	Jelentése	Megjelenés
-#	Fal / platform	Fekete blokk
+Fal / platform	Fekete blokk
 P	Player kezdőpozíció	Piros négyzet
 G	Célpont	Zöld négyzet
 E	Ellenség helye	Kék négyzet
