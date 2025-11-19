@@ -72,6 +72,7 @@ Enemy megjelenítése
 Win → visszadob a menübe
 
 4. Ami még kell (következő fejlesztési lépések):
+
 1. Ellenség AI működése
 
 Idle (állás)
