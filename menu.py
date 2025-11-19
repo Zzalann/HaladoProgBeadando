@@ -1,42 +1,37 @@
 import pygame
 
 WIDTH, HEIGHT = 1000, 600
-
-# ---------- Színek ----------
 WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GRAY = (50, 50, 50)
-BUTTON_HOVER = (70, 70, 70)
+GRAY = (60, 60, 60)
 RED = (200, 0, 0)
-DARK_GRAY = (30, 30, 30)
+HOVER = (90, 90, 90)
+BLACK = (0, 0, 0)
 
-# ---------- Segédfüggvény ----------
-def draw_button(screen, rect, text, base_color, hover_color, text_color):
+def draw_button(screen, rect, text, base, hover, text_color):
     mx, my = pygame.mouse.get_pos()
-    color = hover_color if rect.collidepoint(mx, my) else base_color
-    pygame.draw.rect(screen, BLACK, rect.inflate(4,4), border_radius=10)  # keret
+    color = hover if rect.collidepoint(mx, my) else base
+    pygame.draw.rect(screen, BLACK, rect.inflate(4, 4), border_radius=10)
     pygame.draw.rect(screen, color, rect, border_radius=10)
     font = pygame.font.SysFont(None, 40)
     t = font.render(text, True, text_color)
-    screen.blit(t, (rect.centerx - t.get_width()//2, rect.centery - t.get_height()//2))
+    screen.blit(t, (rect.centerx - t.get_width() // 2, rect.centery - t.get_height() // 2))
 
 def draw_title(screen, text):
-    font = pygame.font.SysFont(None, 70)
+    font = pygame.font.SysFont(None, 80)
     t = font.render(text, True, WHITE)
     screen.blit(t, (WIDTH//2 - t.get_width()//2, 50))
 
-# ---------- Főmenü ----------
 def run_menu(screen):
     clock = pygame.time.Clock()
-    b1 = pygame.Rect(350, 200, 300, 70)
-    b2 = pygame.Rect(350, 300, 300, 70)
+    start = pygame.Rect(350, 220, 300, 70)
+    exit_b = pygame.Rect(350, 320, 300, 70)
 
     while True:
-        screen.fill((20, 20, 20))
+        screen.fill((20,20,20))
         draw_title(screen, "Platformer Project")
 
-        draw_button(screen, b1, "Pályaválasztás", GRAY, BUTTON_HOVER, WHITE)
-        draw_button(screen, b2, "Kilépés", RED, (255,50,50), WHITE)
+        draw_button(screen, start, "Pályaválasztás", GRAY, HOVER, WHITE)
+        draw_button(screen, exit_b, "Kilépés", RED, (255,50,50), WHITE)
 
         pygame.display.flip()
         clock.tick(60)
@@ -45,28 +40,41 @@ def run_menu(screen):
             if event.type == pygame.QUIT:
                 return "exit"
             if event.type == pygame.MOUSEBUTTONDOWN:
-                mx, my = event.pos
-                if b1.collidepoint(mx, my):
+                if start.collidepoint(event.pos):
                     return "level_select"
-                if b2.collidepoint(mx, my):
+                if exit_b.collidepoint(event.pos):
                     return "exit"
 
-# ---------- Pályaválasztó ----------
-def run_level_select(screen):
+def run_level_select(screen, completed_levels):
     clock = pygame.time.Clock()
-    b1 = pygame.Rect(350, 150, 300, 70)
-    b2 = pygame.Rect(350, 240, 300, 70)
-    b3 = pygame.Rect(350, 330, 300, 70)
-    b4 = pygame.Rect(350, 420, 300, 70)
+
+    lvl1 = pygame.Rect(350, 150, 300, 70)
+    lvl2 = pygame.Rect(350, 240, 300, 70)
+    lvl3 = pygame.Rect(350, 330, 300, 70)
+    back = pygame.Rect(350, 430, 300, 70)
+
+    warning_time = 0
+    warning_text = ""
 
     while True:
-        screen.fill(DARK_GRAY)
+        screen.fill((30,30,30))
         draw_title(screen, "Pályaválasztás")
 
-        draw_button(screen, b1, "1. Pálya", GRAY, BUTTON_HOVER, WHITE)
-        draw_button(screen, b2, "2. Pálya", GRAY, BUTTON_HOVER, WHITE)
-        draw_button(screen, b3, "3. Pálya", GRAY, BUTTON_HOVER, WHITE)
-        draw_button(screen, b4, "Vissza", RED, (255,50,50), WHITE)
+        # Pályák elérhetősége
+        draw_button(screen, lvl1, "1. Pálya", GRAY, HOVER, WHITE)
+
+        col2 = GRAY if completed_levels[1] else (80,80,80)
+        col3 = GRAY if completed_levels[2] else (80,80,80)
+
+        draw_button(screen, lvl2, "2. Pálya", col2, HOVER, WHITE)
+        draw_button(screen, lvl3, "3. Pálya", col3, HOVER, WHITE)
+        draw_button(screen, back, "Vissza", RED, (255,50,50), WHITE)
+
+        # Figyelmeztetés
+        if warning_text and pygame.time.get_ticks() < warning_time:
+            font = pygame.font.SysFont(None, 40)
+            t = font.render(warning_text, True, (255,50,50))
+            screen.blit(t, (WIDTH//2 - t.get_width()//2, 520))
 
         pygame.display.flip()
         clock.tick(60)
@@ -74,9 +82,26 @@ def run_level_select(screen):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "back"
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mx, my = event.pos
-                if b1.collidepoint(mx, my): return 1
-                if b2.collidepoint(mx, my): return 2
-                if b3.collidepoint(mx, my): return 3
-                if b4.collidepoint(mx, my): return "back"
+
+                if lvl1.collidepoint((mx, my)):
+                    return 1
+
+                if lvl2.collidepoint((mx, my)):
+                    if completed_levels[1]:
+                        return 2
+                    else:
+                        warning_text = "Előbb teljesítsd az 1. pályát!"
+                        warning_time = pygame.time.get_ticks() + 2000
+
+                if lvl3.collidepoint((mx, my)):
+                    if completed_levels[2]:
+                        return 3
+                    else:
+                        warning_text = "Előbb teljesítsd a megelőző pályákat!"
+                        warning_time = pygame.time.get_ticks() + 2000
+
+                if back.collidepoint((mx, my)):
+                    return "back"
