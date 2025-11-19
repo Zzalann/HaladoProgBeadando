@@ -71,6 +71,16 @@ Enemy megjelenítése
 
 Win → visszadob a menübe
 
+Checkpoint rendszer
+
+Ha a player hozzáér a checkpointhoz → felugrik egy kérdés
+
+Többválasztós kvíz
+
+Csak jó válasz után enged tovább a célhoz
+
+„Feladom” gomb halállal
+
 4. Ami még kell (következő fejlesztési lépések):
 
 Ellenség AI működése
@@ -88,16 +98,6 @@ Game Over képernyő
 Újra próbálom
 
 Vissza a menübe
-
-Checkpoint rendszer
-
-Ha a player hozzáér a checkpointhoz → felugrik egy kérdés
-
-Többválasztós kvíz
-
-Csak jó válasz után enged tovább a célhoz
-
-„Feladom” gomb halállal
 
 Grafikai fejlesztések
 
