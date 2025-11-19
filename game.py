@@ -1,44 +1,11 @@
 import pygame
 import time
 import random
+import os
 
 WIDTH, HEIGHT = 1000, 600
 TILE_SIZE = 40
-FPS = 60
 
-pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Platformer Project")
-clock = pygame.time.Clock()
-
-# ---------- Színek ----------
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GRAY = (50, 50, 50)
-DARK_GRAY = (30, 30, 30)
-RED = (200, 0, 0)
-GREEN = (0, 200, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
-SKY = (135, 206, 235)
-BUTTON_HOVER = (70, 70, 70)
-
-# ---------- Segédfüggvények ----------
-def draw_button(screen, rect, text, base_color, hover_color, text_color):
-    mx, my = pygame.mouse.get_pos()
-    color = hover_color if rect.collidepoint(mx, my) else base_color
-    pygame.draw.rect(screen, BLACK, rect.inflate(4, 4), border_radius=10)  # keret
-    pygame.draw.rect(screen, color, rect, border_radius=10)
-    font = pygame.font.SysFont(None, 40)
-    t = font.render(text, True, text_color)
-    screen.blit(t, (rect.centerx - t.get_width()//2, rect.centery - t.get_height()//2))
-
-def draw_message(screen, text, color, y=50):
-    font = pygame.font.SysFont(None, 50)
-    t = font.render(text, True, color)
-    screen.blit(t, (WIDTH//2 - t.get_width()//2, y))
-
-# ---------- Szintek betöltése ----------
 def load_level(n):
     with open(f"level{n}.txt", "r") as f:
         return [line.rstrip("\n") for line in f]
@@ -51,77 +18,113 @@ def is_on_ground(player, blocks):
             return True
     return False
 
-# ---------- Kvíz ----------
+def draw_button(screen, text, rect, color, text_color):
+    pygame.draw.rect(screen, color, rect, border_radius=10)
+    font = pygame.font.SysFont(None, 40)
+    t = font.render(text, True, text_color)
+    screen.blit(t, (rect.x + 20, rect.y + 15))
+
 def run_quiz(screen, level_number):
-    questions = {
-        1: [
-            ["Milyen szinű a fű?", ["Kék", "Zöld", "Piros", "Fehér"], 1],
+    if level_number == 1:
+        questions = [
+            ["Milyen színű a fű?", ["Kék", "Zöld", "Piros", "Fehér"], 1],
             ["Mennyi 2*5?", ["7", "9", "10", "12"], 2],
-        ],
-        2: [
+            ["Milyen színű a nap?", ["Lila", "Narancssárga", "Fekete", "Zöld"], 1],
+            ["Melyik a legkisebb?", ["5", "2", "9", "1"], 3],
+            ["Mennyi 3+4?", ["5", "6", "7", "8"], 2],
+        ]
+    elif level_number == 2:
+        questions = [
             ["Melyik év szökőév?", ["2023", "2024", "2025", "2026"], 1],
             ["Milyen színű a vér?", ["Zöld", "Kék", "Piros", "Sárga"], 2],
-        ],
-        3: [
+            ["Mennyi 10/2?", ["4", "5", "6", "8"], 1],
+            ["Melyik a legnagyobb?", ["3", "12", "7", "9"], 1],
+            ["Milyen színű a hó?", ["Fehér", "Fekete", "Zöld", "Piros"], 0],
+        ]
+    else:
+        questions = [
             ["Mennyi 6+6?", ["10", "11", "12", "14"], 2],
             ["Milyen színű a tenger?", ["Piros", "Sárga", "Kék", "Lila"], 2],
-        ],
-    }
-    question = random.choice(questions[level_number])
+            ["Mennyi 15-5?", ["5", "10", "15", "20"], 1],
+            ["Melyik igaz?", ["A víz szilárd", "A tűz hideg", "A Nap csillag", "A Hold csillag"], 2],
+            ["Melyik a legkisebb?", ["20", "8", "3", "14"], 2],
+        ]
+
+    question = random.choice(questions)
     q_text, answers, correct = question
-    btns = [pygame.Rect(300, 250 + i*70, 400, 60) for i in range(4)]
+
+    btns = [
+        pygame.Rect(300, 250, 400, 50),
+        pygame.Rect(300, 320, 400, 50),
+        pygame.Rect(300, 390, 400, 50),
+        pygame.Rect(300, 460, 400, 50),
+    ]
     give_up = pygame.Rect(10, 10, 200, 50)
 
     while True:
-        screen.fill(DARK_GRAY)
-        draw_message(screen, q_text, WHITE, y=100)
-        for i, rect in enumerate(btns):
-            draw_button(screen, rect, answers[i], GRAY, BUTTON_HOVER, WHITE)
-        draw_button(screen, give_up, "Feladom", RED, (255,50,50), WHITE)
+        screen.fill((20, 20, 20))
+        font = pygame.font.SysFont(None, 50)
+        t = font.render(q_text, True, (255, 255, 255))
+        screen.blit(t, (50, 100))
+
+        for i in range(4):
+            draw_button(screen, answers[i], btns[i], (50, 50, 50), (255, 255, 255))
+
+        draw_button(screen, "Feladom", give_up, (200, 0, 0), (255, 255, 255))
+
         pygame.display.flip()
-        clock.tick(FPS)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "menu"
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mx, my = event.pos
+
                 if give_up.collidepoint(mx, my):
                     return "menu"
-                for i, rect in enumerate(btns):
-                    if rect.collidepoint(mx, my):
-                        return "correct" if i == correct else "wrong"
 
-# ---------- Game Over képernyő ----------
-def run_game_over(screen):
-    restart_btn = pygame.Rect(300, 250, 400, 60)
-    menu_btn = pygame.Rect(300, 350, 400, 60)
-    while True:
-        screen.fill(BLACK)
-        draw_message(screen, "GAME OVER", RED, y=100)
-        draw_button(screen, restart_btn, "Újra próbálom", GRAY, BUTTON_HOVER, WHITE)
-        draw_button(screen, menu_btn, "Vissza a menübe", GRAY, BUTTON_HOVER, WHITE)
-        pygame.display.flip()
-        clock.tick(FPS)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return "exit"
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mx, my = event.pos
-                if restart_btn.collidepoint(mx, my):
-                    return "restart"
-                if menu_btn.collidepoint(mx, my):
-                    return "menu"
+                for i in range(4):
+                    if btns[i].collidepoint(mx, my):
+                        if i == correct:
+                            return "correct"
+                        else:
+                            return "wrong"
 
-# ---------- Játék futtatása ----------
 def run_game(screen, level_number):
+    clock = pygame.time.Clock()
+
+    # --- SPRITE BETÖLTÉS ---
+    player_img = pygame.image.load("sprites/player.png").convert_alpha()
+    player_img = pygame.transform.scale(player_img, (40, 40))
+
+    enemy_img = pygame.image.load("sprites/enemy.png").convert_alpha()
+    enemy_img = pygame.transform.scale(enemy_img, (40, 40))
+
+    block_img = pygame.image.load("sprites/block.png").convert_alpha()
+    block_img = pygame.transform.scale(block_img, (40, 40))
+
+    checkpoint_img = pygame.image.load("sprites/checkpoint.png").convert_alpha()
+    checkpoint_img = pygame.transform.scale(checkpoint_img, (40, 40))
+
+    goal_img = pygame.image.load("sprites/goal.png").convert_alpha()
+    goal_img = pygame.transform.scale(goal_img, (40, 40))
+
+    bg_img = pygame.image.load("backgrounds/bg1.png").convert()
+    bg_img = pygame.transform.scale(bg_img, (1000, 600))
     while True:
         level = load_level(level_number)
-        blocks, checkpoints, player, goal, enemy = [], [], None, None, None
+
+        blocks = []
+        checkpoints = []
+        player = None
+        goal = None
+        enemy = None
         player_y_vel = 0
         checkpoint_done = False
-        message_text, message_time = "", 0
+        message_text = ""
+        message_time = 0
 
+        # Pálya beolvasása
         for y, row in enumerate(level):
             for x, char in enumerate(row):
                 if char == "#":
@@ -131,16 +134,15 @@ def run_game(screen, level_number):
                 elif char == "G":
                     goal = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
                 elif char == "E":
-                    enemy = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE+10, 30, 30)
-                    enemy_start_x, enemy_speed = enemy.x, 2
+                    enemy = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, 30, 30)
                 elif char == "C":
                     checkpoints.append(pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE))
 
         exit_btn = pygame.Rect(950, 10, 40, 40)
-        enemy_dir = 1
 
         while True:
             keys = pygame.key.get_pressed()
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return "exit"
@@ -153,65 +155,84 @@ def run_game(screen, level_number):
                     if exit_btn.collidepoint(event.pos):
                         return "menu"
 
-            dx = -5 if keys[pygame.K_LEFT] else 5 if keys[pygame.K_RIGHT] else 0
+            # Mozgás
+            dx = 0
+            if keys[pygame.K_LEFT]:
+                dx = -5
+            if keys[pygame.K_RIGHT]:
+                dx = 5
+
             player.x += dx
             for b in blocks:
                 if player.colliderect(b):
-                    player.right = b.left if dx>0 else player.left
-                    player.left = b.right if dx<0 else player.right
+                    if dx > 0:
+                        player.right = b.left
+                    elif dx < 0:
+                        player.left = b.right
 
             player_y_vel += 0.6
             player.y += int(player_y_vel)
+
             for b in blocks:
                 if player.colliderect(b):
-                    if player_y_vel > 0: player.bottom, player_y_vel = b.top, 0
-                    if player_y_vel < 0: player.top, player_y_vel = b.bottom, 0
+                    if player_y_vel > 0:
+                        player.bottom = b.top
+                        player_y_vel = 0
+                    elif player_y_vel < 0:
+                        player.top = b.bottom
+                        player_y_vel = 0
 
-            # ---------- Enemy AI ----------
-            if enemy:
-                distance = player.x - enemy.x
-                if abs(distance) < 200 and abs(player.y - enemy.y) < TILE_SIZE:
-                    enemy.x += enemy_speed if distance > 0 else -enemy_speed
-                # Ne essen le
-                enemy_below = enemy.copy(); enemy_below.y += 1
-                if not any(enemy_below.colliderect(b) for b in blocks):
-                    enemy.x -= enemy_speed * enemy_dir
-                if player.colliderect(enemy):
-                    res = run_game_over(screen)
-                    if res in ["restart", "menu", "exit"]: return res
-
-            # ---------- Checkpoint és cél ----------
+            # WIN
             if player.colliderect(goal):
                 if not checkpoint_done:
-                    message_text, message_time = "MENJ A CHECKPOINTHOZ!", pygame.time.get_ticks()+1500
+                    message_text = "MENJ A CHECKPOINTHOZ!"
+                    message_time = pygame.time.get_ticks() + 1500
                 else:
-                    screen.fill(BLACK)
-                    draw_message(screen, "WIN", GREEN, y=HEIGHT//2-50)
-                    pygame.display.flip(); time.sleep(2)
+                    screen.fill((0,0,0))
+                    f = pygame.font.SysFont(None, 100)
+                    t = f.render("WIN", True, (0,255,0))
+                    screen.blit(t, (400,250))
+                    pygame.display.flip()
+                    time.sleep(2)
                     return "menu"
 
+            # CHECKPOINT
             if not checkpoint_done:
                 for c in checkpoints:
                     if player.colliderect(c):
                         result = run_quiz(screen, level_number)
-                        if result=="correct":
-                            checkpoint_done=True
-                            message_text, message_time="HELYES VÁLASZ!",pygame.time.get_ticks()+1200
-                        else:
-                            res = run_game_over(screen)
-                            if res in ["restart","menu","exit"]: return res
 
-            # ---------- Rajzolás ----------
-            screen.fill(SKY)
-            for b in blocks: pygame.draw.rect(screen, BLACK, b)
-            for c in checkpoints: pygame.draw.rect(screen, YELLOW, c)
-            pygame.draw.rect(screen, RED, player)
-            pygame.draw.rect(screen, GREEN, goal)
-            pygame.draw.rect(screen, RED, exit_btn)
-            pygame.draw.line(screen, WHITE, (955,15),(985,45),4)
-            pygame.draw.line(screen, WHITE, (985,15),(955,45),4)
-            if enemy: pygame.draw.rect(screen, BLUE, enemy)
-            if message_text and pygame.time.get_ticks()<message_time:
-                draw_message(screen, message_text, GREEN if "HELYES" in message_text else RED)
-            else: message_text=""
-            pygame.display.flip(); clock.tick(FPS)
+                        if result == "correct":
+                            checkpoint_done = True
+                            message_text = "HELYES VÁLASZ!"
+                            message_time = pygame.time.get_ticks() + 1200
+
+                        elif result == "wrong":
+                            return "restart"
+                        else:
+                            return "menu"
+
+            # RAJZOLÁS
+            screen.blit(bg_img, (0,0))
+
+            for b in blocks:
+                screen.blit(block_img, (b.x, b.y))
+            for cc in checkpoints:
+                screen.blit(checkpoint_img, (cc.x, cc.y))
+
+            screen.blit(player_img, (player.x, player.y))
+            if enemy:
+                screen.blit(enemy_img, (enemy.x, enemy.y))
+            screen.blit(goal_img, (goal.x, goal.y))
+
+            pygame.draw.rect(screen, (255,0,0), exit_btn)
+            pygame.draw.line(screen, (255,255,255), (955,15), (985,45), 4)
+            pygame.draw.line(screen, (255,255,255), (985,15), (955,45), 4)
+
+            if message_text and pygame.time.get_ticks() < message_time:
+                font = pygame.font.SysFont(None, 40)
+                msg = font.render(message_text, True, (0,255,0))
+                screen.blit(msg, (WIDTH//2 - 180, 20))
+
+            pygame.display.flip()
+            clock.tick(60)
