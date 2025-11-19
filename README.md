@@ -49,17 +49,6 @@ E	Ellenség helye	Kék négyzet
 C	Checkpoint	Sárga négyzet
 .	Üres tér	Semmi
 
-Példa pályarészlet:
-
-#########################
-#.......................#
-#.............C.........#
-#....P....#####.........#
-#.................E.....#
-#...........###.....G...#
-#########################
-
-
 A játék ezeket soronként beolvassa, és a megfelelő helyre rajzolja a blokkokat.
 
 3. Ami már készen van:
