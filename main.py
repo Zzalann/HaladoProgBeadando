@@ -8,7 +8,7 @@ pygame.init()
 WIDTH, HEIGHT = 1000, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Platformer Project")
-#asad
+#asadh
 # Mely pályák vannak teljesítve
 completed_levels = {1: False, 2: False, 3: False}
 
