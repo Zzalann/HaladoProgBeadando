@@ -81,6 +81,14 @@ Csak jó válasz után enged tovább a célhoz
 
 „Feladom” gomb halállal
 
+Player sprite
+
+Enemy sprite
+
+Háttérkép
+
+UI szépítése
+
 4. Ami még kell (következő fejlesztési lépések):
 
 Ellenség AI működése
@@ -101,12 +109,5 @@ Vissza a menübe
 
 Grafikai fejlesztések
 
-Player sprite
-
-Enemy sprite
-
 Tile textúrák
 
-Háttérkép
-
-UI szépítése
