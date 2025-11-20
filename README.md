@@ -105,8 +105,15 @@ Game Over képernyő
 
 Újra próbálom
 
+Ha a jatekos/enemy elfordul balra,jobbra akkor arra nezzen 
 
+A checkpointos kérdésnél rossz válasz esetén visszadob a kiinduláshoz(szint ujrakezdodik),jo valasznal kiirja helyes valasz
 
+Láva bugos,kijavítani
+
+Mapok átszerkesztése
+
+Ugrás
 
 Vissza a menübe
 
