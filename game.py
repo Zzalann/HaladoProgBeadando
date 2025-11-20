@@ -16,7 +16,7 @@ def load_sprite(path, size):
 
 # ------------------------------------------------------
 # LEVEL BETÖLTÉS
-# ------------------------------------------------------
+# -----------------------------------------------------
 def load_level(n):
     with open(f"level{n}.txt", "r") as f:
         return [line.rstrip("\n") for line in f]
