@@ -105,6 +105,9 @@ Game Over képernyő
 
 Újra próbálom
 
+
+
+
 Vissza a menübe
 
 Grafikai fejlesztések
