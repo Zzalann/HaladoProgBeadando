@@ -105,3 +105,54 @@ def run_level_select(screen, completed_levels):
 
                 if back.collidepoint((mx, my)):
                     return "back"
+#----------------------
+##GAME OVER KÉPERNYŐ
+#----------------------
+def run_game_over(screen):
+    """
+    Megjeleníti a Game Over képernyőt, gombokkal a visszatéréshez/újrapróbáláshoz.
+    """
+    global WIDTH, HEIGHT, BLACK, RED, GRAY, HOVER, WHITE  # Használja a globális színeket
+
+    clock = pygame.time.Clock()
+
+    # Gombok definíciója
+    retry_b = pygame.Rect(350, 300, 300, 70)  # Újrapróbálás
+    menu_b = pygame.Rect(350, 390, 300, 70)  # Főmenü
+
+    while True:
+        screen.fill(BLACK)
+
+        # Cím: GAME OVER
+        font_title = pygame.font.SysFont(None, 120, bold=True)
+        t_title = font_title.render("GAME OVER", True, RED)
+        screen.blit(t_title, (WIDTH // 2 - t_title.get_width() // 2, 100))
+
+        # Üzenet
+        font_msg = pygame.font.SysFont(None, 40)
+        t_msg = font_msg.render("Az ellenség elkapott!", True, WHITE)
+        screen.blit(t_msg, (WIDTH // 2 - t_msg.get_width() // 2, 210))
+
+        # Gombok rajzolása
+        # Az újrapróbálás gombot szürke alapon rajzoljuk
+        draw_button(screen, retry_b, "Újrapróbálás", GRAY, HOVER, WHITE)
+        # A főmenü gombot piros alapon rajzoljuk
+        draw_button(screen, menu_b, "Főmenü", RED, (255, 50, 50), WHITE)
+
+        pygame.display.flip()
+        clock.tick(60)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "exit"
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = event.pos
+
+                # Újrapróbálás gomb
+                if retry_b.collidepoint((mx, my)):
+                    return "retry"
+
+                    # Főmenü gomb
+                if menu_b.collidepoint((mx, my)):
+                    return "menu"
+

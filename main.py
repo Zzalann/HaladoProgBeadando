@@ -1,6 +1,6 @@
 import pygame
 import sys
-from menu import run_menu, run_level_select
+from menu import run_menu, run_level_select, run_game_over
 from game import run_game
 
 pygame.init()
@@ -8,7 +8,7 @@ pygame.init()
 WIDTH, HEIGHT = 1000, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Platformer Project")
-#asadh
+
 # Mely pályák vannak teljesítve
 completed_levels = {1: False, 2: False, 3: False}
 
@@ -43,6 +43,19 @@ while running:
 
         elif result == "exit":
             running = False
+
+        elif result == "game_over":  # <-- ÚJ ÁG
+            pygame.event.get()
+            state = "game_over"
+
+        elif state == "game_over":  # <-- ÚJ ÁG
+            result = run_game_over(screen)
+
+            if result == "menu":
+                state = "menu"
+
+            elif result == "exit":
+                running = False
 
 pygame.quit()
 sys.exit()
