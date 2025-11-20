@@ -6,66 +6,57 @@ import random
 WIDTH, HEIGHT = 1000, 600
 TILE_SIZE = 40
 
-
-# SPRITE BETÖLTŐ 
-
+# ------------------------------------------------------
+# SPRITE BETÖLTŐ
+# ------------------------------------------------------
 def load_sprite(path, size):
     img = pygame.image.load(path).convert_alpha()
     img = pygame.transform.scale(img, size)
     return img
 
-# PÁLYA BETÖLTÉSE
-
+# ------------------------------------------------------
+# LEVEL BETÖLTÉS
+# ------------------------------------------------------
 def load_level(n):
     with open(f"level{n}.txt", "r") as f:
         return [line.rstrip("\n") for line in f]
 
-def is_on_ground(player, blocks):
+def is_on_ground(player, blocks, moving_blocks):
     t = player.copy()
     t.y += 1
+
     for b in blocks:
         if t.colliderect(b):
             return True
+    for mb in moving_blocks:
+        if t.colliderect(mb["rect"]):
+            return True
+    
     return False
 
-
-# GOMB
-
-def draw_button(screen, text, rect, color, text_color):
-    pygame.draw.rect(screen, color, rect, border_radius=10)
-    pygame.draw.rect(screen, (255,255,255), rect, 3, border_radius=10)
-    font = pygame.font.SysFont(None, 40)
-    t = font.render(text, True, text_color)
-    screen.blit(t, (rect.x + (rect.width - t.get_width())//2,
-                    rect.y + (rect.height - t.get_height())//2))
-
-
+# ------------------------------------------------------
 # KVÍZ
-
+# ------------------------------------------------------
 def run_quiz(screen, level_number):
-
-    if level_number == 1:
-        questions = [
-            ["Milyen színű a fű?", ["Kék", "Zöld", "Piros", "Fehér"], 1],
-            ["Mennyi 2*5?", ["7", "9", "10", "11"], 2],
+    questions = {
+        1: [
+            ["Milyen színű a fű?", ["Kék","Zöld","Piros","Fehér"], 1],
+            ["Mennyi 2*5?", ["7","9","10","11"], 2],
+        ],
+        2: [
+            ["Melyik év szökőév?", ["2023","2024","2025","2026"], 1],
+            ["Milyen színű a vér?", ["Zöld","Kék","Piros","Sárga"], 2],
+        ],
+        3: [
+            ["Mennyi 6+6?", ["10","11","12","14"], 2],
+            ["Milyen színű a tenger?", ["Piros","Sárga","Kék","Lila"], 2],
         ]
+    }
 
-    elif level_number == 2:
-        questions = [
-            ["Melyik év szökőév?", ["2023", "2024", "2025", "2026"], 1],
-            ["Milyen színű a vér?", ["Zöld", "Kék", "Piros", "Sárga"], 2],
-        ]
+    q_text, answers, correct = random.choice(questions[level_number])
 
-    else:
-        questions = [
-            ["Mennyi 6+6?", ["10", "11", "12", "14"], 2],
-            ["Milyen színű a tenger?", ["Piros", "Sárga", "Kék", "Lila"], 2],
-        ]
-
-    q_text, answers, correct = random.choice(questions)
     btns = [pygame.Rect(300, 260 + i*70, 400, 60) for i in range(4)]
     exit_btn = pygame.Rect(10, 10, 200, 50)
-
     clock = pygame.time.Clock()
 
     while True:
@@ -76,9 +67,15 @@ def run_quiz(screen, level_number):
         screen.blit(t, (WIDTH//2 - t.get_width()//2, 120))
 
         for i in range(4):
-            draw_button(screen, answers[i], btns[i], (50,50,50), (255,255,255))
+            pygame.draw.rect(screen, (80,80,80), btns[i], border_radius=10)
+            font = pygame.font.SysFont(None, 40)
+            text = font.render(answers[i], True, (255,255,255))
+            screen.blit(text, (btns[i].x + 20, btns[i].y + 10))
 
-        draw_button(screen, "Feladom", exit_btn, (200,0,0), (255,255,255))
+        pygame.draw.rect(screen, (200,0,0), exit_btn)
+        font = pygame.font.SysFont(None, 40)
+        t = font.render("Feladom", True, (255,255,255))
+        screen.blit(t, (20, 20))
 
         pygame.display.flip()
         clock.tick(60)
@@ -87,30 +84,37 @@ def run_quiz(screen, level_number):
             if event.type == pygame.QUIT:
                 return "menu"
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if exit_btn.collidepoint(event.pos):
+                mx, my = event.pos
+
+                if exit_btn.collidepoint((mx,my)):
                     return "menu"
+
                 for i in range(4):
-                    if btns[i].collidepoint(event.pos):
+                    if btns[i].collidepoint((mx,my)):
                         return "correct" if i == correct else "wrong"
 
-
-# A JÁTÉK
-
+# ------------------------------------------------------
+# FŐ JÁTÉK
+# ------------------------------------------------------
 def run_game(screen, level_number):
 
     clock = pygame.time.Clock()
 
-    # SPRITEOK 
+    # ---- SPRITES ----
     player_img = load_sprite("sprites/player.png", (40,40))
     enemy_img = load_sprite("sprites/enemy.png", (40,40))
     block_img = load_sprite("sprites/block.png", (40,40))
+    block2_img = load_sprite("sprites/block2.png", (40,40))   
     checkpoint_img = load_sprite("sprites/checkpoint.png", (40,40))
     goal_img = load_sprite("sprites/goal.png", (40,40))
+    lava_img = load_sprite("sprites/lava.png", (40,40))
     bg_img = pygame.image.load("backgrounds/bg1.png").convert()
 
-    # PÁLYA BEOLVASÁS
+    # ---- LEVEL BEOLVASÁS ----
     level = load_level(level_number)
     blocks = []
+    moving_blocks = []   
+    lava_blocks = []
     checkpoints = []
     player = None
     enemy = None
@@ -118,44 +122,61 @@ def run_game(screen, level_number):
 
     for y, row in enumerate(level):
         for x, ch in enumerate(row):
+
             if ch == "#":
                 blocks.append(pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE))
+
+            elif ch == "M":   # mozgó platform LEFT-RIGHT
+                rect = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                moving_blocks.append({
+                    "rect": rect,
+                    "speed": 2,
+                    "min_x": rect.x - 80,
+                    "max_x": rect.x + 80
+                })
+
+            elif ch == "L":   # lava
+                lava_blocks.append(pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE))
+
             elif ch == "P":
                 player = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, 40, 40)
+
             elif ch == "G":
                 goal = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, 40, 40)
+
             elif ch == "E":
-                enemy = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE+10, 40, 40)
+                enemy = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, 40, 40)
+
             elif ch == "C":
                 checkpoints.append(pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, 40, 40))
 
     player_y_vel = 0
     checkpoint_done = False
-
     message_text = ""
     msg_timer = 0
-
     exit_btn = pygame.Rect(950, 10, 40, 40)
 
-    # GAME LOOP 
+    # ----------------------------------------------------
+    # JÁTÉK LOOP
+    # ----------------------------------------------------
     while True:
 
         keys = pygame.key.get_pressed()
 
+        #  események 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "exit"
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return "menu"
-                if event.key == pygame.K_SPACE and is_on_ground(player, blocks):
-                    player_y_vel = -15  
-
+                if event.key == pygame.K_SPACE and is_on_ground(player, blocks, moving_blocks):
+                    player_y_vel = -12
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if exit_btn.collidepoint(event.pos):
                     return "menu"
 
-        # MOZGÁS
+        # PLAYER X mozgatás
         dx = (keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]) * 5
         player.x += dx
 
@@ -164,10 +185,17 @@ def run_game(screen, level_number):
                 if dx > 0: player.right = b.left
                 if dx < 0: player.left = b.right
 
-        # GRAVITÁCIÓ
+        for mb in moving_blocks:
+            r = mb["rect"]
+            if player.colliderect(r):
+                if dx > 0: player.right = r.left
+                if dx < 0: player.left = r.right
+
+        #  PLAYER Y (gravitáció) 
         player_y_vel += 0.6
         player.y += int(player_y_vel)
 
+        #  PLATFORM ütközés 
         for b in blocks:
             if player.colliderect(b):
                 if player_y_vel > 0:
@@ -177,7 +205,30 @@ def run_game(screen, level_number):
                     player.top = b.bottom
                     player_y_vel = 0
 
-        # WIN
+        for mb in moving_blocks:
+            r = mb["rect"]
+            if player.colliderect(r):
+                if player_y_vel > 0:
+                    player.bottom = r.top
+                    player_y_vel = 0
+                    player.x += mb["speed"]   
+                else:
+                    player.top = r.bottom
+                    player_y_vel = 0
+
+        # MOZGÓ PLATFORM MOZGÁSA 
+        for mb in moving_blocks:
+            mb["rect"].x += mb["speed"]
+
+            if mb["rect"].x < mb["min_x"] or mb["rect"].x > mb["max_x"]:
+                mb["speed"] *= -1
+
+        #  LAVA ellenőrzés 
+        for lv in lava_blocks:
+            if player.colliderect(lv):
+                return "menu"
+
+        #  WIN
         if player.colliderect(goal):
             if not checkpoint_done:
                 message_text = "MENJ A CHECKPOINTHOZ!"
@@ -185,7 +236,7 @@ def run_game(screen, level_number):
             else:
                 return "win"
 
-        # CHECKPOINT LOGIKA
+        #  CHECKPOINT
         if not checkpoint_done:
             for c in checkpoints:
                 if player.colliderect(c):
@@ -197,34 +248,22 @@ def run_game(screen, level_number):
                     else:
                         return "menu"
 
-        # RAJZOLÁS 
+        # ----------------------------------------------------
+        # RAJZOLÁS
+        # ----------------------------------------------------
         screen.blit(bg_img, (0,0))
 
-        for b in blocks:
-            screen.blit(block_img, (b.x, b.y))
+        for b in blocks: screen.blit(block_img, (b.x, b.y))
+        for lv in lava_blocks: screen.blit(lava_img, (lv.x, lv.y))
 
-        for c in checkpoints:
-            screen.blit(checkpoint_img, (c.x, c.y))
+        for mb in moving_blocks:
+            screen.blit(block2_img, (mb["rect"].x, mb["rect"].y))
+
+        for c in checkpoints: screen.blit(checkpoint_img, (c.x, c.y))
 
         screen.blit(player_img, (player.x, player.y))
-
-        if enemy:
-            screen.blit(enemy_img, (enemy.x, enemy.y))
-
+        if enemy: screen.blit(enemy_img, (enemy.x, enemy.y))
         screen.blit(goal_img, (goal.x, goal.y))
-
-        # EXIT
-        pygame.draw.rect(screen, (255,0,0), exit_btn)
-        pygame.draw.line(screen, (255,255,255), (955,15),(985,45),3)
-        pygame.draw.line(screen, (255,255,255), (985,15),(955,45),3)
-
-        # ÜZENET
-        if message_text and pygame.time.get_ticks() < msg_timer:
-            font = pygame.font.SysFont(None, 40)
-            t = font.render(message_text, True, (255,255,0))
-            screen.blit(t, (WIDTH//2 - t.get_width()//2, 20))
-        else:
-            message_text = ""
 
         pygame.display.flip()
         clock.tick(60)
