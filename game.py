@@ -16,7 +16,7 @@ def load_sprite(path, size):
 
 # ------------------------------------------------------
 # LEVEL BETÖLTÉS
-# -----------------------------------------------------
+# ------------------------------------------------------
 def load_level(n):
     with open(f"level{n}.txt", "r") as f:
         return [line.rstrip("\n") for line in f]
@@ -24,18 +24,16 @@ def load_level(n):
 def is_on_ground(player, blocks, moving_blocks):
     t = player.copy()
     t.y += 1
-
     for b in blocks:
         if t.colliderect(b):
             return True
     for mb in moving_blocks:
         if t.colliderect(mb["rect"]):
             return True
-    
     return False
 
 # ------------------------------------------------------
-# ELLENSÉG AI
+# ENEMY AI
 # ------------------------------------------------------
 STATE_IDLE = "IDLE"
 STATE_CHASE = "CHASE"
@@ -58,17 +56,13 @@ def move_towards(current_rect, target_rect, speed):
     cy1 = current_rect.y + current_rect.height // 2
     cx2 = target_rect.x + target_rect.width // 2
     cy2 = target_rect.y + target_rect.height // 2
-
     dx = cx2 - cx1
     dy = cy2 - cy1
     dist = get_distance(current_rect, target_rect)
-
     if dist == 0:
         return current_rect.x, current_rect.y
-
     nx = dx / dist
     ny = dy / dist
-
     return int(current_rect.x + nx * speed), int(current_rect.y + ny * speed)
 
 # ------------------------------------------------------
@@ -105,14 +99,11 @@ def run_quiz(screen, level_number):
 
         for i in range(4):
             pygame.draw.rect(screen, (80,80,80), btns[i], border_radius=10)
-            font = pygame.font.SysFont(None, 40)
-            text = font.render(answers[i], True, (255,255,255))
+            text = pygame.font.SysFont(None, 40).render(answers[i], True, (255,255,255))
             screen.blit(text, (btns[i].x + 20, btns[i].y + 10))
 
         pygame.draw.rect(screen, (200,0,0), exit_btn)
-        font = pygame.font.SysFont(None, 40)
-        t = font.render("Feladom", True, (255,255,255))
-        screen.blit(t, (20, 20))
+        screen.blit(pygame.font.SysFont(None, 40).render("Feladom", True, (255,255,255)), (20, 20))
 
         pygame.display.flip()
         clock.tick(60)
@@ -135,11 +126,12 @@ def run_game(screen, level_number):
 
     clock = pygame.time.Clock()
 
-    # SPRITES
+    # Player forgás
     player_img_right = load_sprite("sprites/player.png", (40,40))
     player_img_left = pygame.transform.flip(player_img_right, True, False)
     player_img = player_img_right
 
+    # Sprites
     enemy_img = load_sprite("sprites/enemy.png", (40,40))
     block_img = load_sprite("sprites/block.png", (40,40))
     block2_img = load_sprite("sprites/block2.png", (40,40))
@@ -153,13 +145,13 @@ def run_game(screen, level_number):
     moving_blocks = []
     lava_blocks = []
     checkpoints = []
-
     player = None
     enemy = None
     goal = None
     enemy_start_pos = None
     enemy_state = STATE_IDLE
 
+    # Level beolvasás
     for y,row in enumerate(level):
         for x,ch in enumerate(row):
             px = x*TILE_SIZE
@@ -197,13 +189,11 @@ def run_game(screen, level_number):
     checkpoint_done = False
     message_text = ""
     msg_timer = 0
-    exit_btn = pygame.Rect(950,10,40,40)
 
-    # GAME LOOP
+    # Game loop
     while True:
         keys = pygame.key.get_pressed()
 
-        # Események
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "exit"
@@ -211,9 +201,9 @@ def run_game(screen, level_number):
                 if event.key == pygame.K_ESCAPE:
                     return "menu"
                 if event.key == pygame.K_SPACE and is_on_ground(player, blocks, moving_blocks):
-                    player_y_vel = -12
+                    player_y_vel = -15  # nagyobb ugrás
 
-        # Player sprite forgatás
+        # Sprite forgatás
         if keys[pygame.K_LEFT]:
             player_img = player_img_left
         elif keys[pygame.K_RIGHT]:
@@ -265,12 +255,12 @@ def run_game(screen, level_number):
             if mb["rect"].x < mb["min_x"] or mb["rect"].x > mb["max_x"]:
                 mb["speed"] *= -1
 
-        # Lava — AZONNALI HALÁL
+        # ---------- LÁVA AZONNALI HALÁL ----------
         for lv in lava_blocks:
             if player.colliderect(lv):
                 return "menu"
 
-        # Enemy AI
+        # ---------- Enemy AI ----------
         if enemy:
             start_rect = pygame.Rect(enemy_start_pos.x, enemy_start_pos.y, TILE_SIZE, TILE_SIZE)
 
@@ -310,6 +300,8 @@ def run_game(screen, level_number):
                     result = run_quiz(screen, level_number)
                     if result == "correct":
                         checkpoint_done = True
+                        message_text = "HELYES VÁLASZ!"
+                        msg_timer = pygame.time.get_ticks() + 1500
                     else:
                         return "menu"
 
@@ -334,6 +326,11 @@ def run_game(screen, level_number):
             screen.blit(enemy_img, (enemy.x, enemy.y))
 
         screen.blit(goal_img, (goal.x, goal.y))
+
+        # Üzenet
+        if message_text and pygame.time.get_ticks() < msg_timer:
+            txt = pygame.font.SysFont(None, 40).render(message_text, True, (255,255,0))
+            screen.blit(txt, (WIDTH//2 - txt.get_width()//2, 20))
 
         pygame.display.flip()
         clock.tick(60)
