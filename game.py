@@ -16,7 +16,7 @@ def load_sprite(path, size):
 
 # ------------------------------------------------------
 # LEVEL BETÖLTÉS
-# ------------------------------------------------------
+# -----------------------------------------------------
 def load_level(n):
     with open(f"level{n}.txt", "r") as f:
         return [line.rstrip("\n") for line in f]
@@ -31,13 +31,50 @@ def is_on_ground(player, blocks, moving_blocks):
     for mb in moving_blocks:
         if t.colliderect(mb["rect"]):
             return True
+    
     return False
+
+# ------------------------------------------------------
+# ELLENSÉG AI
+# ------------------------------------------------------
+STATE_IDLE = "IDLE"
+STATE_CHASE = "CHASE"
+STATE_RETURN = "RETURN"
+
+CHASE_RANGE = 200
+RETURN_RANGE = 300
+CATCH_DISTANCE = 10
+ENEMY_SPEED = 1
+
+def get_distance(r1, r2):
+    cx1 = r1.x + r1.width // 2
+    cy1 = r1.y + r1.height // 2
+    cx2 = r2.x + r2.width // 2
+    cy2 = r2.y + r2.height // 2
+    return ((cx2 - cx1)**2 + (cy2 - cy1)**2)**0.5
+
+def move_towards(current_rect, target_rect, speed):
+    cx1 = current_rect.x + current_rect.width // 2
+    cy1 = current_rect.y + current_rect.height // 2
+    cx2 = target_rect.x + target_rect.width // 2
+    cy2 = target_rect.y + target_rect.height // 2
+
+    dx = cx2 - cx1
+    dy = cy2 - cy1
+    dist = get_distance(current_rect, target_rect)
+
+    if dist == 0:
+        return current_rect.x, current_rect.y
+
+    nx = dx / dist
+    ny = dy / dist
+
+    return int(current_rect.x + nx * speed), int(current_rect.y + ny * speed)
 
 # ------------------------------------------------------
 # KVÍZ
 # ------------------------------------------------------
 def run_quiz(screen, level_number):
-
     questions = {
         1: [
             ["Milyen színű a fű?", ["Kék","Zöld","Piros","Fehér"], 1],
@@ -85,10 +122,8 @@ def run_quiz(screen, level_number):
                 return "menu"
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mx, my = event.pos
-
                 if exit_btn.collidepoint((mx,my)):
                     return "menu"
-
                 for i in range(4):
                     if btns[i].collidepoint((mx,my)):
                         return "correct" if i == correct else "wrong"
@@ -100,10 +135,10 @@ def run_game(screen, level_number):
 
     clock = pygame.time.Clock()
 
-    # ---- SPRITES ----
-    player_img = load_sprite("sprites/player.png", (40,40))
-    player_img_left = pygame.transform.flip(player_img, True, False)
-    facing_left = False
+    # SPRITES
+    player_img_right = load_sprite("sprites/player.png", (40,40))
+    player_img_left = pygame.transform.flip(player_img_right, True, False)
+    player_img = player_img_right
 
     enemy_img = load_sprite("sprites/enemy.png", (40,40))
     block_img = load_sprite("sprites/block.png", (40,40))
@@ -113,25 +148,28 @@ def run_game(screen, level_number):
     lava_img = load_sprite("sprites/lava.png", (40,40))
     bg_img = pygame.image.load("backgrounds/bg1.png").convert()
 
-    # ---- LEVEL BEOLVASÁS ----
     level = load_level(level_number)
     blocks = []
     moving_blocks = []
     lava_blocks = []
     checkpoints = []
+
     player = None
     enemy = None
     goal = None
-    start_pos = None
+    enemy_start_pos = None
+    enemy_state = STATE_IDLE
 
-    for y, row in enumerate(level):
-        for x, ch in enumerate(row):
+    for y,row in enumerate(level):
+        for x,ch in enumerate(row):
+            px = x*TILE_SIZE
+            py = y*TILE_SIZE
 
             if ch == "#":
-                blocks.append(pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE))
+                blocks.append(pygame.Rect(px,py,TILE_SIZE,TILE_SIZE))
 
             elif ch == "M":
-                rect = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                rect = pygame.Rect(px,py,TILE_SIZE,TILE_SIZE)
                 moving_blocks.append({
                     "rect": rect,
                     "speed": 2,
@@ -140,32 +178,32 @@ def run_game(screen, level_number):
                 })
 
             elif ch == "L":
-                lava_blocks.append(pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE))
+                lava_blocks.append(pygame.Rect(px,py,TILE_SIZE,TILE_SIZE))
 
             elif ch == "P":
-                player = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, 40, 40)
-                start_pos = player.copy()
+                player = pygame.Rect(px,py,40,40)
 
             elif ch == "G":
-                goal = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, 40, 40)
+                goal = pygame.Rect(px,py,40,40)
 
             elif ch == "E":
-                enemy = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, 40, 40)
+                enemy = pygame.Rect(px,py,40,40)
+                enemy_start_pos = pygame.Rect(px,py,40,40)
 
             elif ch == "C":
-                checkpoints.append(pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, 40, 40))
+                checkpoints.append(pygame.Rect(px,py,40,40))
 
     player_y_vel = 0
     checkpoint_done = False
-    exit_btn = pygame.Rect(950, 10, 40, 40)
+    message_text = ""
+    msg_timer = 0
+    exit_btn = pygame.Rect(950,10,40,40)
 
-    # ----------------------------------------------------
-    # JÁTÉK LOOP
-    # ----------------------------------------------------
+    # GAME LOOP
     while True:
         keys = pygame.key.get_pressed()
 
-        # események
+        # Események
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "exit"
@@ -175,33 +213,32 @@ def run_game(screen, level_number):
                 if event.key == pygame.K_SPACE and is_on_ground(player, blocks, moving_blocks):
                     player_y_vel = -12
 
-        # ---- PLAYER X MOZGÁS ----
-        dx = (keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]) * 5
-        if dx < 0:
-            facing_left = True
-        elif dx > 0:
-            facing_left = False
+        # Player sprite forgatás
+        if keys[pygame.K_LEFT]:
+            player_img = player_img_left
+        elif keys[pygame.K_RIGHT]:
+            player_img = player_img_right
 
+        # X mozgás
+        dx = (keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]) * 5
         player.x += dx
 
-        # fal ütközés
         for b in blocks:
             if player.colliderect(b):
                 if dx > 0: player.right = b.left
                 if dx < 0: player.left = b.right
 
-        # mozgó block ütközés
         for mb in moving_blocks:
             r = mb["rect"]
             if player.colliderect(r):
                 if dx > 0: player.right = r.left
                 if dx < 0: player.left = r.right
 
-        # ---- GRAVITÁCIÓ ----
+        # Y mozgás
         player_y_vel += 0.6
         player.y += int(player_y_vel)
 
-        # block ütközés Y
+        # Platform ütközés
         for b in blocks:
             if player.colliderect(b):
                 if player_y_vel > 0:
@@ -211,7 +248,6 @@ def run_game(screen, level_number):
                     player.top = b.bottom
                     player_y_vel = 0
 
-        # mozgó block Y
         for mb in moving_blocks:
             r = mb["rect"]
             if player.colliderect(r):
@@ -223,52 +259,80 @@ def run_game(screen, level_number):
                     player.top = r.bottom
                     player_y_vel = 0
 
-        # ---- MOZGÓ BLOCK MOZGÁS ----
+        # Mozgó platform mozgás
         for mb in moving_blocks:
             mb["rect"].x += mb["speed"]
             if mb["rect"].x < mb["min_x"] or mb["rect"].x > mb["max_x"]:
                 mb["speed"] *= -1
 
-        # ---- LAVA HALÁL (javított hitbox) ----
+        # Lava — AZONNALI HALÁL
         for lv in lava_blocks:
             if player.colliderect(lv):
-                player.topleft = start_pos.topleft   # restart
                 return "menu"
 
-        # ---- CHECKPOINT ----
+        # Enemy AI
+        if enemy:
+            start_rect = pygame.Rect(enemy_start_pos.x, enemy_start_pos.y, TILE_SIZE, TILE_SIZE)
+
+            dist_to_player = get_distance(enemy, player)
+            dist_to_start = get_distance(enemy, start_rect)
+
+            if dist_to_player <= CHASE_RANGE:
+                enemy_state = STATE_CHASE
+            elif enemy_state == STATE_CHASE and dist_to_start > RETURN_RANGE:
+                enemy_state = STATE_RETURN
+            elif enemy_state == STATE_RETURN and dist_to_start < 5:
+                enemy.topleft = enemy_start_pos.topleft
+                enemy_state = STATE_IDLE
+            elif enemy_state == STATE_CHASE and dist_to_player > CHASE_RANGE:
+                enemy_state = STATE_IDLE
+
+            if enemy_state == STATE_CHASE:
+                enemy.x, enemy.y = move_towards(enemy, player, ENEMY_SPEED)
+            elif enemy_state == STATE_RETURN:
+                enemy.x, enemy.y = move_towards(enemy, start_rect, ENEMY_SPEED)
+
+            if enemy.colliderect(player):
+                return "menu"
+
+        # WIN
+        if player.colliderect(goal):
+            if not checkpoint_done:
+                message_text = "MENJ A CHECKPOINTHOZ!"
+                msg_timer = pygame.time.get_ticks() + 1500
+            else:
+                return "win"
+
+        # CHECKPOINT
         if not checkpoint_done:
             for c in checkpoints:
                 if player.colliderect(c):
                     result = run_quiz(screen, level_number)
-
                     if result == "correct":
                         checkpoint_done = True
                     else:
-                        player.topleft = start_pos.topleft
                         return "menu"
 
-        # ---- WIN ----
-        if player.colliderect(goal):
-            if not checkpoint_done:
-                pass
-            else:
-                return "win"
-
-        # ---- RAJZ ----
+        # RAJZOLÁS
         screen.blit(bg_img, (0,0))
 
-        for b in blocks: screen.blit(block_img, (b.x, b.y))
-        for lv in lava_blocks: screen.blit(lava_img, (lv.x, lv.y))
-        for mb in moving_blocks: screen.blit(block2_img, (mb["rect"].x, mb["rect"].y))
-        for c in checkpoints: screen.blit(checkpoint_img, (c.x, c.y))
+        for b in blocks:
+            screen.blit(block_img, (b.x,b.y))
 
-        # player irány sprite
-        if facing_left:
-            screen.blit(player_img_left, (player.x, player.y))
-        else:
-            screen.blit(player_img, (player.x, player.y))
+        for lv in lava_blocks:
+            screen.blit(lava_img, (lv.x,lv.y))
 
-        if enemy: screen.blit(enemy_img, (enemy.x, enemy.y))
+        for mb in moving_blocks:
+            screen.blit(block2_img, (mb["rect"].x, mb["rect"].y))
+
+        for c in checkpoints:
+            screen.blit(checkpoint_img, (c.x,c.y))
+
+        screen.blit(player_img, (player.x, player.y))
+
+        if enemy:
+            screen.blit(enemy_img, (enemy.x, enemy.y))
+
         screen.blit(goal_img, (goal.x, goal.y))
 
         pygame.display.flip()
