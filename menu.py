@@ -60,15 +60,20 @@ def run_level_select(screen, completed_levels):
         screen.fill((30,30,30))
         draw_title(screen, "Pályaválasztás")
 
+        # 1. pálya mindig elérhető
         draw_button(screen, lvl1, "1. Pálya", GRAY, HOVER, WHITE)
 
+        # 2. pálya akkor nyitott, ha az 1. kész
         col2 = GRAY if completed_levels[1] else (80,80,80)
-        col3 = GRAY if completed_levels[2] else (80,80,80)
-
         draw_button(screen, lvl2, "2. Pálya", col2, HOVER, WHITE)
+
+        # 3. pálya akkor nyitott, ha a 2. kész
+        col3 = GRAY if completed_levels[2] else (80,80,80)
         draw_button(screen, lvl3, "3. Pálya", col3, HOVER, WHITE)
+
         draw_button(screen, back, "Vissza", RED, (255,50,50), WHITE)
 
+        # hibaüzenet kirajzolása
         if warning_text and pygame.time.get_ticks() < warning_time:
             font = pygame.font.SysFont(None, 40)
             t = font.render(warning_text, True, (255,50,50))
@@ -77,6 +82,7 @@ def run_level_select(screen, completed_levels):
         pygame.display.flip()
         clock.tick(60)
 
+        # események
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "back"
@@ -105,12 +111,10 @@ def run_level_select(screen, completed_levels):
                     return "back"
 
 def run_game_over(screen):
-    global WIDTH, HEIGHT, BLACK, RED, GRAY, HOVER, WHITE  # Használja a globális színeket
-
     clock = pygame.time.Clock()
 
-    retry_b = pygame.Rect(350, 300, 300, 70)  # Újrapróbálás
-    menu_b = pygame.Rect(350, 390, 300, 70)  # Főmenü
+    retry_b = pygame.Rect(350, 300, 300, 70)
+    menu_b = pygame.Rect(350, 390, 300, 70)
 
     while True:
         screen.fill(BLACK)
@@ -120,7 +124,7 @@ def run_game_over(screen):
         screen.blit(t_title, (WIDTH // 2 - t_title.get_width() // 2, 100))
 
         font_msg = pygame.font.SysFont(None, 40)
-        t_msg = font_msg.render("Az ellenség elkapott!", True, WHITE)
+        t_msg = font_msg.render("Meghaltál!", True, WHITE)
         screen.blit(t_msg, (WIDTH // 2 - t_msg.get_width() // 2, 210))
 
         draw_button(screen, retry_b, "Újrapróbálás", GRAY, HOVER, WHITE)
@@ -141,3 +145,33 @@ def run_game_over(screen):
                 if menu_b.collidepoint((mx, my)):
                     return "menu"
 
+def run_win_screen(screen):
+    pygame.font.init()
+    clock = pygame.time.Clock()
+
+    font_big = pygame.font.SysFont(None, 120)
+    font_small = pygame.font.SysFont(None, 50)
+
+    win_text = font_big.render("WIN!", True, (255, 215, 0))
+    back_button = pygame.Rect(350, 400, 300, 80)
+
+    while True:
+        screen.fill((30, 30, 30))
+
+        screen.blit(win_text, (WIDTH // 2 - win_text.get_width() // 2, 150))
+
+        pygame.draw.rect(screen, (70, 70, 70), back_button, border_radius=10)
+        back_label = font_small.render("Vissza a menübe", True, (255, 255, 255))
+        screen.blit(back_label, (back_button.x + 30, back_button.y + 20))
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "exit"
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if back_button.collidepoint(event.pos):
+                    return "menu"
+
+        clock.tick(60)
