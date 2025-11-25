@@ -51,55 +51,11 @@ C	Checkpoint	Sárga négyzet
 
 A játék ezeket soronként beolvassa, és a megfelelő helyre rajzolja a blokkokat.
 
-3. Ami már készen van:
-
-Menük
-
-Pályaválasztó rendszer
-
-Pályák betöltése
-
-Játékos mozgás
-
-Ugrás és gravitáció
-
-Ütközés platformokkal
-
-Checkpoint megjelenítése
-
-Enemy megjelenítése
-
-Win → visszadob a menübe
-
-Checkpoint rendszer
-
-Ha a player hozzáér a checkpointhoz → felugrik egy kérdés
-
-Többválasztós kvíz
-
-Csak jó válasz után enged tovább a célhoz
-
-„Feladom” gomb halállal
-
-Player sprite
-
-Enemy sprite
-
-Háttérkép
-
-UI szépítése
-
 4. Ami még kell (következő fejlesztési lépések):
-
-Game Over képernyő
-
-Újra próbálom
 
 Láva bugos,kijavítani
 
 Mapok átszerkesztése
-
-Vissza a menübe
 
 Grafikai fejlesztések
 
