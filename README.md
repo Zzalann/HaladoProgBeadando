@@ -91,16 +91,6 @@ UI szépítése
 
 4. Ami még kell (következő fejlesztési lépések):
 
-Ellenség AI működése
-
-Idle (állás)
-
-Ha a player közel kerül → üldözés
-
-Ha messzire megy → visszatérés a kezdő pontra
-
-Ha elkap → Game Over
-
 Game Over képernyő
 
 Újra próbálom
@@ -112,6 +102,4 @@ Mapok átszerkesztése
 Vissza a menübe
 
 Grafikai fejlesztések
-
-Tile textúrák
 

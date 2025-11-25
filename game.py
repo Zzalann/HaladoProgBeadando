@@ -6,17 +6,11 @@ import random
 WIDTH, HEIGHT = 1000, 600
 TILE_SIZE = 40
 
-# ------------------------------------------------------
-# SPRITE BETÖLTŐ
-# ------------------------------------------------------
 def load_sprite(path, size):
     img = pygame.image.load(path).convert_alpha()
     img = pygame.transform.scale(img, size)
     return img
 
-# ------------------------------------------------------
-# LEVEL BETÖLTÉS
-# ------------------------------------------------------
 def load_level(n):
     with open(f"level{n}.txt", "r") as f:
         return [line.rstrip("\n") for line in f]
@@ -32,9 +26,6 @@ def is_on_ground(player, blocks, moving_blocks):
             return True
     return False
 
-# ------------------------------------------------------
-# ENEMY AI
-# ------------------------------------------------------
 STATE_IDLE = "IDLE"
 STATE_CHASE = "CHASE"
 STATE_RETURN = "RETURN"
@@ -65,9 +56,6 @@ def move_towards(current_rect, target_rect, speed):
     ny = dy / dist
     return int(current_rect.x + nx * speed), int(current_rect.y + ny * speed)
 
-# ------------------------------------------------------
-# KVÍZ
-# ------------------------------------------------------
 def run_quiz(screen, level_number):
     questions = {
         1: [
@@ -119,19 +107,14 @@ def run_quiz(screen, level_number):
                     if btns[i].collidepoint((mx,my)):
                         return "correct" if i == correct else "wrong"
 
-# ------------------------------------------------------
-# FŐ JÁTÉK
-# ------------------------------------------------------
 def run_game(screen, level_number):
 
     clock = pygame.time.Clock()
 
-    # Player forgás
     player_img_right = load_sprite("sprites/player.png", (40,40))
     player_img_left = pygame.transform.flip(player_img_right, True, False)
     player_img = player_img_right
 
-    # Sprites
     enemy_img = load_sprite("sprites/enemy.png", (40,40))
     block_img = load_sprite("sprites/block.png", (40,40))
     block2_img = load_sprite("sprites/block2.png", (40,40))
@@ -151,7 +134,6 @@ def run_game(screen, level_number):
     enemy_start_pos = None
     enemy_state = STATE_IDLE
 
-    # Level beolvasás
     for y,row in enumerate(level):
         for x,ch in enumerate(row):
             px = x*TILE_SIZE
@@ -190,7 +172,6 @@ def run_game(screen, level_number):
     message_text = ""
     msg_timer = 0
 
-    # Game loop
     while True:
         keys = pygame.key.get_pressed()
 
@@ -203,13 +184,11 @@ def run_game(screen, level_number):
                 if event.key == pygame.K_SPACE and is_on_ground(player, blocks, moving_blocks):
                     player_y_vel = -15  # nagyobb ugrás
 
-        # Sprite forgatás
         if keys[pygame.K_LEFT]:
             player_img = player_img_left
         elif keys[pygame.K_RIGHT]:
             player_img = player_img_right
 
-        # X mozgás
         dx = (keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]) * 5
         player.x += dx
 
@@ -224,11 +203,9 @@ def run_game(screen, level_number):
                 if dx > 0: player.right = r.left
                 if dx < 0: player.left = r.right
 
-        # Y mozgás
         player_y_vel += 0.6
         player.y += int(player_y_vel)
 
-        # Platform ütközés
         for b in blocks:
             if player.colliderect(b):
                 if player_y_vel > 0:
@@ -249,18 +226,15 @@ def run_game(screen, level_number):
                     player.top = r.bottom
                     player_y_vel = 0
 
-        # Mozgó platform mozgás
         for mb in moving_blocks:
             mb["rect"].x += mb["speed"]
             if mb["rect"].x < mb["min_x"] or mb["rect"].x > mb["max_x"]:
                 mb["speed"] *= -1
 
-        # ---------- LÁVA AZONNALI HALÁL ----------
         for lv in lava_blocks:
             if player.colliderect(lv):
                 return "menu"
 
-        # ---------- Enemy AI ----------
         if enemy:
             start_rect = pygame.Rect(enemy_start_pos.x, enemy_start_pos.y, TILE_SIZE, TILE_SIZE)
 
