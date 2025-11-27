@@ -51,11 +51,4 @@ C	Checkpoint	Sárga négyzet
 
 A játék ezeket soronként beolvassa, és a megfelelő helyre rajzolja a blokkokat.
 
-4. Ami még kell (következő fejlesztési lépések):
-
-Láva bugos,kijavítani
-
-Mapok átszerkesztése
-
-Grafikai fejlesztések
 
