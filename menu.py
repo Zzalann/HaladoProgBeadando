@@ -152,7 +152,7 @@ def run_win_screen(screen):
     font_big = pygame.font.SysFont(None, 120)
     font_small = pygame.font.SysFont(None, 50)
 
-    win_text = font_big.render("WIN!", True, (255, 215, 0))
+    win_text = font_big.render("VICTORY!", True, (255, 215, 0))
     back_button = pygame.Rect(350, 400, 300, 80)
 
     while True:
@@ -161,7 +161,7 @@ def run_win_screen(screen):
         screen.blit(win_text, (WIDTH // 2 - win_text.get_width() // 2, 150))
 
         pygame.draw.rect(screen, (70, 70, 70), back_button, border_radius=10)
-        back_label = font_small.render("Vissza a menübe", True, (255, 255, 255))
+        back_label = font_small.render("Menübe lépés", True, (255, 255, 255))
         screen.blit(back_label, (back_button.x + 30, back_button.y + 20))
 
         pygame.display.flip()
